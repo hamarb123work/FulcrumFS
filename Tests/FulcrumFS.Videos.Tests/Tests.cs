@@ -251,66 +251,55 @@ public sealed partial class Tests
     {
         using var repoCtx = GetRepo(out var repo);
 
-        try
-        {
-            await CheckProcessing(
-                repo,
-                VideoProcessingOptions.Preserve with
+        await CheckProcessing(
+            repo,
+            VideoProcessingOptions.Preserve with
+            {
+                ForceValidateAllStreams = true,
+                VideoReencodeMode = StreamReencodeMode.SelectSmallest,
+                AudioReencodeMode = StreamReencodeMode.Always,
+                ResultFormats = [MediaContainerFormat.MP4],
+                MaxSampleRate = AudioSampleRate.Hz44100,
+                MaximumChromaSubsampling = ChromaSubsampling.Subsampling420,
+                AudioQuality = AudioQuality.Lowest,
+                VideoQuality = VideoQuality.High,
+                VideoCompressionLevel = VideoCompressionLevel.Low,
+                ForceProgressiveFrames = true,
+                ForceSquarePixels = true,
+                FpsOptions = new VideoFpsOptions(VideoFpsMode.LimitByIntegerDivision, 13),
+                MaxChannels = AudioChannels.Mono,
+                MaximumBitsPerChannel = BitsPerChannel.Bits8,
+                RemapHDRToSDR = true,
+                ResizeOptions = new VideoResizeOptions(VideoResizeMode.FitDown, maxWidth, maxHeight),
+                TryPreserveUnrecognizedStreams = true,
+                ProgressCallback = async (_, _) => { },
+                ForceProgressiveDownload = true,
+                VideoSourceValidation = VideoStreamValidationOptions.None with
                 {
-                    ForceValidateAllStreams = true,
-                    VideoReencodeMode = StreamReencodeMode.SelectSmallest,
-                    AudioReencodeMode = StreamReencodeMode.Always,
-                    ResultFormats = [MediaContainerFormat.MP4],
-                    MaxSampleRate = AudioSampleRate.Hz44100,
-                    MaximumChromaSubsampling = ChromaSubsampling.Subsampling420,
-                    AudioQuality = AudioQuality.Lowest,
-                    VideoQuality = VideoQuality.High,
-                    VideoCompressionLevel = VideoCompressionLevel.Low,
-                    ForceProgressiveFrames = true,
-                    ForceSquarePixels = true,
-                    FpsOptions = new VideoFpsOptions(VideoFpsMode.LimitByIntegerDivision, 13),
-                    MaxChannels = AudioChannels.Mono,
-                    MaximumBitsPerChannel = BitsPerChannel.Bits8,
-                    RemapHDRToSDR = true,
-                    ResizeOptions = new VideoResizeOptions(VideoResizeMode.FitDown, maxWidth, maxHeight),
-                    TryPreserveUnrecognizedStreams = true,
-                    ProgressCallback = async (_, _) => { },
-                    ForceProgressiveDownload = true,
-                    VideoSourceValidation = VideoStreamValidationOptions.None with
-                    {
-                        MinWidth = 4,
-                        MaxWidth = 5341,
-                        MinHeight = 7,
-                        MaxHeight = 8001,
-                        MinPixels = 52,
-                        MaxPixels = 10_000_234,
-                        MinStreams = 2,
-                        MaxStreams = 8,
-                        MinLength = TimeSpan.FromMilliseconds(63),
-                        MaxLength = TimeSpan.FromDays(4),
-                    },
-                    AudioSourceValidation = AudioStreamValidationOptions.None with
-                    {
-                        MinStreams = 3,
-                        MaxStreams = 4,
-                        MinLength = TimeSpan.FromMilliseconds(47),
-                        MaxLength = TimeSpan.FromDays(13),
-                    },
-                    ResultAudioCodecs = [AudioCodec.AAC],
-                    ResultVideoCodecs = [VideoCodec.HEVCAnyTag, VideoCodec.H264],
-                    MetadataStrippingMode = VideoMetadataStrippingMode.ThumbnailOnly,
+                    MinWidth = 4,
+                    MaxWidth = 5341,
+                    MinHeight = 7,
+                    MaxHeight = 8001,
+                    MinPixels = 52,
+                    MaxPixels = 10_000_234,
+                    MinStreams = 2,
+                    MaxStreams = 8,
+                    MinLength = TimeSpan.FromMilliseconds(63),
+                    MaxLength = TimeSpan.FromDays(4),
                 },
-                "video133.mp4",
-                exceptionMessage: null,
-                expectedChanges: (NewStreamCount: 15, StreamMapping: []));
-        }
-        catch when (maxWidth == 41 && maxHeight == 37)
-        {
-            // See https://bitbucket.org/multicoreware/x265_git/issues/1022/heap-corruption-issue
-
-#pragma warning disable RS0030 // Do not use banned APIs
-            Assert.Inconclusive();
-#pragma warning restore RS0030 // Do not use banned APIs
-        }
+                AudioSourceValidation = AudioStreamValidationOptions.None with
+                {
+                    MinStreams = 3,
+                    MaxStreams = 4,
+                    MinLength = TimeSpan.FromMilliseconds(47),
+                    MaxLength = TimeSpan.FromDays(13),
+                },
+                ResultAudioCodecs = [AudioCodec.AAC],
+                ResultVideoCodecs = [VideoCodec.HEVCAnyTag, VideoCodec.H264],
+                MetadataStrippingMode = VideoMetadataStrippingMode.ThumbnailOnly,
+            },
+            "video133.mp4",
+            exceptionMessage: null,
+            expectedChanges: (NewStreamCount: 15, StreamMapping: []));
     }
 }
